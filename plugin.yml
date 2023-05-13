@@ -1,0 +1,7 @@
+---
+name: Stargazer
+version: 0.0.1
+main: Echore\Stargazer\Main
+api: 4.20.0
+src-namespace-prefix: Echore\Stargazer
+...
