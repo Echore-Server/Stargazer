@@ -2,12 +2,14 @@
 
 namespace Echore\Stargazer;
 
-use Closure;
+use Lyrica0954\SmartEntity\entity\LivingBase;
 use pocketmine\entity\Living;
+use pocketmine\player\Player;
 use pocketmine\utils\ObjectSet;
+use RuntimeException;
 use WeakMap;
 
-class Stargazer {
+abstract class Stargazer {
 
 	const SOURCE_MODIFIER_ABSOLUTE = 259;
 	const SOURCE_MODIFIER_MULTIPLIER = 260;
@@ -16,14 +18,6 @@ class Stargazer {
 	 * @var WeakMap<Living, Stargazer>
 	 */
 	private static WeakMap $map;
-
-	protected Living $entity;
-
-	protected ModifiableValue $maxHealth;
-
-	protected ModifiableValue $health;
-
-	protected ModifiableValue $movementSpeed;
 
 	protected ModifierApplier $modifierApplier;
 
@@ -37,64 +31,15 @@ class Stargazer {
 	 */
 	protected ObjectSet $inflictDamageModifiers;
 
-	public function __construct(Living $entity) {
-		$this->entity = $entity;
+	public function __construct() {
 		$this->modifierApplier = ModifierApplierTypes::default();
-
-		/**
-		 * @param ModifiableValue $value
-		 * @param Closure(ModifiableValue $value, Living $entity): void $hook
-		 * @return ModifiableValue
-		 */
-		$hook = function(ModifiableValue $value, Closure $hook) use ($entity): ModifiableValue {
-			$value->getDirtyHooks()->add(function() use ($entity, $hook, $value): void {
-				($hook)($value, $entity);
-			});
-
-			return $value;
-		};
-
-		$this->maxHealth = $hook(new ModifiableValue(20), function(ModifiableValue $value, Living $entity): void {
-			$entity->setMaxHealth($value->getFinal($this->modifierApplier));
-
-			if ($entity->getHealth() > $entity->getMaxHealth()) {
-				$entity->setHealth($entity->getMaxHealth());
-			}
-		});
-
-		$this->health = $hook(new ModifiableValue(20), function(ModifiableValue $value, Living $entity): void {
-			$final = $value->getFinal($this->modifierApplier);
-			$entity->setHealth($final);
-
-			if ($entity->getHealth() > $entity->getMaxHealth()) {
-				$entity->setHealth($entity->getMaxHealth());
-			}
-		});
-
-		$this->movementSpeed = $hook(new ModifiableValue(0.10), function(ModifiableValue $value, Living $entity): void {
-			$final = $value->getFinal($this->modifierApplier);
-
-			$entity->setMovementSpeed($final, true);
-		});
-
-		$this->movementSpeed->setValue($entity->getMovementSpeed());
 
 		$this->takeDamageModifiers = new ObjectSet();
 		$this->inflictDamageModifiers = new ObjectSet();
 	}
 
-	/**
-	 * @return ModifiableValue
-	 */
-	public function getHealth(): ModifiableValue {
-		return $this->health;
-	}
-
-	/**
-	 * @return ModifiableValue
-	 */
-	public function getMaxHealth(): ModifiableValue {
-		return $this->maxHealth;
+	public static function initFor(Living $entity): void {
+		self::get($entity);
 	}
 
 	public static function get(Living $entity): Stargazer {
@@ -104,8 +49,29 @@ class Stargazer {
 	}
 
 	private static function load(Living $entity): Stargazer {
-		return new Stargazer($entity);
+		if ($entity instanceof LivingBase) {
+			return new StargazerMonster($entity);
+		} elseif ($entity instanceof Player) {
+			return new StargazerPlayer($entity);
+		}
+
+		throw new RuntimeException("Not supported entity type");
 	}
+
+	/**
+	 * @return ModifiableValue
+	 */
+	abstract public function getMaxHealth(): ModifiableValue;
+
+	/**
+	 * @return ModifiableValue
+	 */
+	abstract public function getMovementSpeed(): ModifiableValue;
+
+	/**
+	 * @return ModifiableValue
+	 */
+	abstract public function getAttackDamage(): ModifiableValue;
 
 	/**
 	 * @return ModifierApplier
