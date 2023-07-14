@@ -17,6 +17,10 @@ class Modifier {
 		$this->multiplier = $multiplier;
 	}
 
+	public static function default(): self{
+		return new self(0.0, 1.0);
+	}
+
 	public static function absolute(float|int $v): self {
 		return new self($v, 1.0);
 	}
