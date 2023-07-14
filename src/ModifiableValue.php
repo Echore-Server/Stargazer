@@ -29,7 +29,10 @@ class ModifiableValue {
 	public function __construct(int|float $original) {
 		$this->value = $original;
 		$this->original = $original;
+		$this->modifiers = [];
+		$this->dirty = false;
 		$this->dirtyHooks = new ObjectSet();
+		$this->finalValue = $original;
 	}
 
 	/**
@@ -57,6 +60,11 @@ class ModifiableValue {
 		foreach ($this->dirtyHooks as $hook) {
 			($hook)();
 		}
+	}
+
+	public function removeAll(): void {
+		$this->modifiers = [];
+		$this->dirty();
 	}
 
 	public function getFinalFloored(?ModifierApplier $applier = null): int {
