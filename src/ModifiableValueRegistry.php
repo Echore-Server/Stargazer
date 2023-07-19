@@ -21,6 +21,33 @@ class ModifiableValueRegistry {
 		$this->set($name, $value);
 	}
 
+	public function __clone(): void {
+		$values = [];
+		foreach($this->values as $name => $v){
+			$values[$name] = clone $v;
+		}
+
+		$this->values = $values;
+	}
+
+	/**
+	 * @return array<string, ModifiableValue>
+	 */
+	public function getAll(): array{
+		return $this->values;
+	}
+
+	/**
+	 * @param string[] $names
+	 * @param ModifiableValue $value
+	 * @return void
+	 */
+	public function registerAll(array $names, ModifiableValue $value): void{
+		foreach($names as $name){
+			$this->register($name, clone $value);
+		}
+	}
+
 	protected function set(string $name, ModifiableValue $value): void {
 		$this->values[$name] = $value;
 	}
