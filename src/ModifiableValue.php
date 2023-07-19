@@ -35,6 +35,10 @@ class ModifiableValue {
 		$this->finalValue = $original;
 	}
 
+	public function __clone(): void {
+		$this->dirtyHooks = clone $this->dirtyHooks;
+	}
+
 	/**
 	 * @return ObjectSet<Closure>
 	 */
