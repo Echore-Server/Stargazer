@@ -2,10 +2,10 @@
 
 namespace Echore\Stargazer;
 
-use Lyrica0954\SmartEntity\entity\LivingBase;
+use Echore\NaturalEntity\INaturalEntity;
 
 /**
- * @extends BaseStargazer<LivingBase>
+ * @extends BaseStargazer<INaturalEntity>
  */
 class StargazerMonster extends BaseStargazer {
 	public function __construct(mixed $entity) {

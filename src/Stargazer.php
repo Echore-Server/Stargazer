@@ -2,6 +2,7 @@
 
 namespace Echore\Stargazer;
 
+use Echore\NaturalEntity\INaturalEntity;
 use Lyrica0954\SmartEntity\entity\LivingBase;
 use pocketmine\entity\Living;
 use pocketmine\player\Player;
@@ -49,7 +50,7 @@ abstract class Stargazer {
 	}
 
 	private static function load(Living $entity): Stargazer {
-		if ($entity instanceof LivingBase) {
+		if ($entity instanceof INaturalEntity) {
 			return new StargazerMonster($entity);
 		} elseif ($entity instanceof Player) {
 			return new StargazerPlayer($entity);
