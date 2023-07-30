@@ -7,7 +7,6 @@ use Lyrica0954\SmartEntity\entity\LivingBase;
 use pocketmine\entity\Living;
 use pocketmine\player\Player;
 use pocketmine\utils\ObjectSet;
-use RuntimeException;
 use WeakMap;
 
 abstract class Stargazer {
@@ -49,14 +48,14 @@ abstract class Stargazer {
 		return self::$map[$entity] ??= self::load($entity);
 	}
 
-	private static function load(Living $entity): Stargazer {
+	private static function load(Living $entity): ?Stargazer {
 		if ($entity instanceof INaturalEntity) {
 			return new StargazerMonster($entity);
 		} elseif ($entity instanceof Player) {
 			return new StargazerPlayer($entity);
 		}
 
-		throw new RuntimeException("Not supported entity type");
+		return null;
 	}
 
 	/**
