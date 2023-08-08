@@ -13,9 +13,9 @@ class ModifiableValue {
 
 
 	/**
-	 * @var Modifier[]
+	 * @var ObjectSet<Modifier>
 	 */
-	protected array $modifiers;
+	protected ObjectSet $modifiers;
 
 	protected int|float $finalValue;
 
@@ -26,14 +26,21 @@ class ModifiableValue {
 	 */
 	protected ObjectSet $dirtyHooks;
 
+	/**
+	 * @var ObjectSet<Modifier>
+	 */
+	protected ObjectSet $modifiedValueModifiers;
+
 	public function __construct(int|float $original) {
 		$this->value = $original;
 		$this->original = $original;
-		$this->modifiers = [];
+		$this->modifiers = new ObjectSet();
 		$this->dirty = false;
 		$this->dirtyHooks = new ObjectSet();
+		$this->modifiedValueModifiers = new ObjectSet();
 		$this->finalValue = $original;
 	}
+
 
 	public function __clone(): void {
 		$this->dirtyHooks = clone $this->dirtyHooks;
@@ -53,8 +60,8 @@ class ModifiableValue {
 		return $this->dirty;
 	}
 
-	public function remove(Modifier $modifier): void {
-		unset($this->modifiers[spl_object_hash($modifier)]);
+	public function removeAll(): void {
+		$this->modifiers->clear();
 		$this->dirty();
 	}
 
@@ -66,11 +73,6 @@ class ModifiableValue {
 		}
 	}
 
-	public function removeAll(): void {
-		$this->modifiers = [];
-		$this->dirty();
-	}
-
 	public function getFinalFloored(?ModifierApplier $applier = null): int {
 		return (int) floor($this->getFinal($applier));
 	}
@@ -78,7 +80,7 @@ class ModifiableValue {
 	public function getFinal(?ModifierApplier $applier = null): float {
 		$applier ??= ModifierApplierTypes::default();
 		if ($this->dirty) {
-			$this->finalValue = $applier->apply($this->value, $this->modifiers);
+			$this->finalValue = $applier->apply($this->value, $this->modifiers->toArray(), $this->modifiedValueModifiers->toArray());
 			$this->dirty = false;
 		}
 
@@ -86,7 +88,27 @@ class ModifiableValue {
 	}
 
 	public function apply(Modifier $modifier): void {
-		$this->modifiers[spl_object_hash($modifier)] = $modifier;
+		$this->modifiers->add($modifier);
+		$this->dirty();
+	}
+
+	public function applyModifiedValue(Modifier $modifier): void {
+		$this->modifiedValueModifiers->add($modifier);
+		$this->dirty();
+	}
+
+	public function removeModifiedValue(Modifier $modifier): void {
+		$this->modifiedValueModifiers->remove($modifier);
+		$this->dirty();
+	}
+
+	public function remove(Modifier $modifier): void {
+		$this->modifiers->remove($modifier);
+		$this->dirty();
+	}
+
+	public function removeAllOfModifierValue(): void {
+		$this->modifiedValueModifiers->clear();
 		$this->dirty();
 	}
 
