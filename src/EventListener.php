@@ -27,7 +27,7 @@ class EventListener implements Listener {
 			if ($damager instanceof Living) {
 				$damagerStargazer = Stargazer::get($damager);
 
-				$applied = $damagerStargazer->getModifierApplier()->apply($final, $damagerStargazer->getInflictDamageModifiers()->toArray(), $totalAbsolute, false);
+				$applied = $damagerStargazer->getModifierApplier()->apply($final, $damagerStargazer->getInflictDamageModifiers()->toArray(), [], $totalAbsolute, false);
 				$sourceModifier = $applied - $final;
 
 				$event->setModifier(
@@ -45,7 +45,9 @@ class EventListener implements Listener {
 		if ($entity instanceof Living) {
 			$entityStargazer = Stargazer::get($entity);
 
-			$applied = $entityStargazer->getModifierApplier()->apply($final, $entityStargazer->getTakeDamageModifiers()->toArray(), $totalAbsolute, false);
+			$applied = $entityStargazer->getModifierApplier()->apply(
+				$final, $entityStargazer->getTakeDamageModifiers()->toArray(),
+				[], $totalAbsolute, false); // TODO: stargazer modifiedValueModifier support
 			$sourceModifier = $applied - $final;
 
 			$event->setModifier(
