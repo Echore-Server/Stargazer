@@ -13,6 +13,10 @@ class ModifiableValueRegistry {
 		$this->values = [];
 	}
 
+	public function exists(string $name): bool{
+		return isset($this->values[$name]);
+	}
+
 	public function register(string $name, ModifiableValue $value): void {
 		if (isset($this->values[$name])) {
 			return;
