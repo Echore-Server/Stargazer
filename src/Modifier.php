@@ -4,28 +4,68 @@ namespace Echore\Stargazer;
 
 class Modifier {
 
+	const FILTER_NONE = 0;
+	const FILTER_NEGATIVE = 1;
+	const FILTER_POSITIVE = 2;
+	const FILTER_ZERO = 3;
+
 	public int|float $absolute;
 
 	public int|float $multiplier;
 
+	public readonly int $filterType;
+
 	/**
 	 * @param float|int $absolute
 	 * @param float|int $multiplier
+	 * @param self::FILTER_* $filterType
 	 */
-	public function __construct(float|int $absolute, float|int $multiplier) {
+	public function __construct(float|int $absolute, float|int $multiplier, int $filterType = self::FILTER_NONE) {
 		$this->absolute = $absolute;
 		$this->multiplier = $multiplier;
+		$this->filterType = $filterType;
 	}
 
-	public static function default(): self{
+	public static function default(): self {
 		return new self(0.0, 1.0);
 	}
 
-	public static function absolute(float|int $v): self {
-		return new self($v, 1.0);
+	public static function absolute(float|int $v, int $filterType = self::FILTER_NONE): self {
+		return new self($v, 1.0, $filterType);
 	}
 
-	public static function multiplier(float|int $v): self {
-		return new self(0.0, $v);
+	public static function multiplier(float|int $v, int $filterType = self::FILTER_NONE): self {
+		return new self(0.0, $v, $filterType);
+	}
+
+	public function testFilter(float|int $value): bool {
+		if ($this->filterType === Modifier::FILTER_NEGATIVE && $value > 0) {
+			return false;
+		} elseif ($this->filterType === Modifier::FILTER_POSITIVE && $value < 0) {
+			return false;
+		} elseif ($this->filterType === Modifier::FILTER_ZERO && ($value != 0)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	public function reverse(): Modifier {
+		return new self($this->absolute, 1.0 - $this->multiplier);
+	}
+
+	public function multiplies(): Modifier {
+		return new self($this->absolute, 1.0 + $this->multiplier);
+	}
+
+	/**
+	 * @return self::FILTER_*
+	 */
+	public function getFilterType(): int {
+		return $this->filterType;
+	}
+
+	public function merge(Modifier $modifier): self {
+		return new self($this->absolute + $modifier->absolute, $this->multiplier * $modifier->multiplier);
 	}
 }
