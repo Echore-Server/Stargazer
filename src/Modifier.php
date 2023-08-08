@@ -50,11 +50,22 @@ class Modifier {
 		return true;
 	}
 
-	public function reverse(): Modifier {
+	/**
+	 * @return Modifier
+	 *
+	 * @see Modifier::multiplied
+	 */
+	public function divided(): Modifier {
 		return new self($this->absolute, 1.0 - $this->multiplier);
 	}
 
-	public function multiplies(): Modifier {
+	/**
+	 * fixme: もうちょっといいメソッド名ないかな？ (dividedも)
+	 * @return Modifier
+	 *
+	 * @see Modifier::divided
+	 */
+	public function multiplied(): Modifier {
 		return new self($this->absolute, 1.0 + $this->multiplier);
 	}
 
