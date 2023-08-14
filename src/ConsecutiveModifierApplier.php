@@ -5,7 +5,7 @@ namespace Echore\Stargazer;
 class ConsecutiveModifierApplier extends ModifierApplier {
 
 	public function apply(float|int $value, array $modifiers, array $applyModifiers = [], ?int &$totalAbsolute = null, bool $absolute = true): float {
-		$finalAbsolute = 0;
+		$totalAbsolute ??= 0;
 		foreach ($modifiers as $modifier) {
 			if (!$modifier->testFilter($value)) {
 				continue;
@@ -18,14 +18,12 @@ class ConsecutiveModifierApplier extends ModifierApplier {
 			}
 
 			$value += $diff;
-			$finalAbsolute += $modifier->absolute;
+			$totalAbsolute += $modifier->absolute;
 		}
 
 		if ($absolute) {
-			$value += $finalAbsolute;
+			$value += $totalAbsolute;
 		}
-
-		$totalAbsolute = $finalAbsolute;
 
 		return $value;
 	}

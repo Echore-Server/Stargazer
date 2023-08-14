@@ -17,7 +17,11 @@ class ModifiableValue {
 	 */
 	protected ObjectSet $modifiers;
 
+	protected ObjectSet $applicable;
+
 	protected int|float $finalValue;
+
+	protected int $totalAbsolute;
 
 	protected bool $dirty;
 
@@ -36,6 +40,8 @@ class ModifiableValue {
 		$this->original = $original;
 		$this->modifiers = new ObjectSet();
 		$this->dirty = false;
+		$this->totalAbsolute = 0;
+		$this->applicable = new ObjectSet();
 		$this->dirtyHooks = new ObjectSet();
 		$this->modifiedValueModifiers = new ObjectSet();
 		$this->finalValue = $original;
@@ -80,7 +86,7 @@ class ModifiableValue {
 	public function getFinal(?ModifierApplier $applier = null): float {
 		$applier ??= ModifierApplierTypes::default();
 		if ($this->dirty) {
-			$this->finalValue = $applier->apply($this->value, $this->modifiers->toArray(), $this->modifiedValueModifiers->toArray());
+			$this->finalValue = $applier->apply($this->value, $this->applicable->toArray(), $this->modifiedValueModifiers->toArray(), absolute: false) + $this->totalAbsolute;
 			$this->dirty = false;
 		}
 
@@ -88,8 +94,22 @@ class ModifiableValue {
 	}
 
 	public function apply(Modifier $modifier): void {
+
+		$this->totalAbsolute += $modifier->absolute;
+
+		if ($modifier->multiplier != 1.0) {
+			$this->applicable->add($modifier);
+		}
+
 		$this->modifiers->add($modifier);
 		$this->dirty();
+	}
+
+	/**
+	 * @return ObjectSet<Modifier>
+	 */
+	public function getApplicable(): ObjectSet {
+		return $this->applicable;
 	}
 
 	public function applyModifiedValue(Modifier $modifier): void {
@@ -104,6 +124,9 @@ class ModifiableValue {
 
 	public function remove(Modifier $modifier): void {
 		$this->modifiers->remove($modifier);
+		$this->applicable->remove($modifier);
+
+		$this->totalAbsolute -= $modifier->absolute;
 		$this->dirty();
 	}
 
