@@ -2,6 +2,8 @@
 
 namespace Echore\Stargazer;
 
+use pocketmine\utils\ObjectSet;
+
 class Modifier {
 
 	const FILTER_NONE = 0;
@@ -15,6 +17,8 @@ class Modifier {
 
 	public readonly int $filterType;
 
+	protected ObjectSet $applyListeners;
+
 	/**
 	 * @param float|int $absolute
 	 * @param float|int $multiplier
@@ -24,6 +28,7 @@ class Modifier {
 		$this->absolute = $absolute;
 		$this->multiplier = $multiplier;
 		$this->filterType = $filterType;
+		$this->applyListeners = new ObjectSet();
 	}
 
 	public static function default(): self {
@@ -36,6 +41,12 @@ class Modifier {
 
 	public static function multiplier(float|int $v, int $filterType = self::FILTER_NONE): self {
 		return new self(0.0, $v, $filterType);
+	}
+
+	public function onApplied(float $before, float $after): void {
+		foreach ($this->applyListeners as $listener) {
+			($listener)();
+		}
 	}
 
 	public function testFilter(float|int $value): bool {

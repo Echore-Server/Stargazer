@@ -11,6 +11,8 @@ class ConsecutiveModifierApplier extends ModifierApplier {
 				continue;
 			}
 
+			$before = $value;
+
 			$diff = $value * ($modifier->multiplier - 1.0);
 
 			foreach ($applyModifiers as $applyModifier) {
@@ -19,6 +21,8 @@ class ConsecutiveModifierApplier extends ModifierApplier {
 
 			$value += $diff;
 			$totalAbsolute += $modifier->absolute;
+
+			$modifier->onApplied($before, $value);
 		}
 
 		if ($absolute) {
