@@ -2,7 +2,6 @@
 
 namespace Echore\Stargazer;
 
-use Lyrica0954\SmartEntity\entity\LivingBase;
 use pocketmine\entity\Living;
 use pocketmine\player\Player;
 use pocketmine\utils\ObjectSet;
