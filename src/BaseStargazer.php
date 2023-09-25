@@ -33,7 +33,7 @@ abstract class BaseStargazer extends Stargazer {
 		$this->entity = $entity;
 
 		$this->maxHealth = $this->createHook(new ModifiableValue(20), function(ModifiableValue $value, mixed $entity): void {
-			$entity->setMaxHealth($value->getFinal($this->modifierApplier));
+			$entity->setMaxHealth($value->getFinalFloored($this->modifierApplier));
 
 			if ($entity->getHealth() > $entity->getMaxHealth()) {
 				$entity->setHealth($entity->getMaxHealth());
