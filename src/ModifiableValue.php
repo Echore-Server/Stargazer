@@ -68,6 +68,7 @@ class ModifiableValue {
 
 	public function removeAll(): void {
 		$this->modifiers->clear();
+		$this->applicable->clear();
 		$this->dirty();
 	}
 
