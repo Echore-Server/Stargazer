@@ -4,7 +4,6 @@ namespace Echore\Stargazer;
 
 use pocketmine\entity\Living;
 use pocketmine\player\Player;
-use pocketmine\utils\ObjectSet;
 use WeakMap;
 
 abstract class Stargazer {
@@ -19,21 +18,15 @@ abstract class Stargazer {
 
 	protected ModifierApplier $modifierApplier;
 
-	/**
-	 * @var ObjectSet<Modifier>
-	 */
-	protected ObjectSet $takeDamageModifiers;
+	protected ModifierSet $takeDamageModifiers;
 
-	/**
-	 * @var ObjectSet<Modifier>
-	 */
-	protected ObjectSet $inflictDamageModifiers;
+	protected ModifierSet $inflictDamageModifiers;
 
 	public function __construct() {
 		$this->modifierApplier = ModifierApplierTypes::default();
 
-		$this->takeDamageModifiers = new ObjectSet();
-		$this->inflictDamageModifiers = new ObjectSet();
+		$this->takeDamageModifiers = new ModifierSet();
+		$this->inflictDamageModifiers = new ModifierSet();
 	}
 
 	public static function initFor(Living $entity): void {
@@ -78,18 +71,11 @@ abstract class Stargazer {
 		return $this->modifierApplier;
 	}
 
-
-	/**
-	 * @return ObjectSet<Modifier>
-	 */
-	public function getInflictDamageModifiers(): ObjectSet {
+	public function getInflictDamageModifiers(): ModifierSet {
 		return $this->inflictDamageModifiers;
 	}
 
-	/**
-	 * @return ObjectSet<Modifier>
-	 */
-	public function getTakeDamageModifiers(): ObjectSet {
+	public function getTakeDamageModifiers(): ModifierSet {
 		return $this->takeDamageModifiers;
 	}
 
