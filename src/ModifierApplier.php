@@ -12,6 +12,6 @@ abstract class ModifierApplier {
 	 * @param bool $absolute
 	 * @return float
 	 */
-	abstract public function apply(int|float $value, array $modifiers, array $applyModifiers = [], ?int &$totalAbsolute = null, bool $absolute = true): float;
+	abstract public function apply(int|float $value, array $modifiers, array $applyModifiers = [], int|float|null &$totalAbsolute = null, bool $absolute = true): float;
 
 }
