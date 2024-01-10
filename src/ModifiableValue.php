@@ -72,7 +72,7 @@ class ModifiableValue {
 		$this->dirty();
 	}
 
-	protected function dirty(): void {
+	public function dirty(): void {
 		$this->dirty = true;
 
 		foreach ($this->dirtyHooks as $hook) {
