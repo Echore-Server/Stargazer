@@ -62,7 +62,16 @@ class ModifierSet {
 		foreach ($this->changeHooks as $hook) {
 			($hook)();
 		}
+	}
 
+	public function __clone(): void {
+		$clonedSet = [];
+
+		foreach($this->set as $id => $modifier){
+			$clonedSet[$id] = clone $modifier;
+		}
+
+		$this->set = $clonedSet;
 	}
 
 	protected function getNextIdByNamespace(string $namespace): string {

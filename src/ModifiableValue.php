@@ -21,7 +21,7 @@ class ModifiableValue {
 
 	protected int|float $finalValue;
 
-	protected int $totalAbsolute;
+	protected float $totalAbsolute;
 
 	protected bool $dirty;
 
@@ -95,12 +95,8 @@ class ModifiableValue {
 	}
 
 	public function apply(Modifier $modifier): void {
-
 		$this->totalAbsolute += $modifier->absolute;
-
-		if ($modifier->multiplier != 1.0) {
-			$this->applicable->add($modifier);
-		}
+		$this->applicable->add($modifier);
 
 		$this->modifiers->add($modifier);
 		$this->dirty();
