@@ -25,9 +25,10 @@ class ModifierSet {
 	}
 
 
-	public function isEmpty(): bool{
+	public function isEmpty(): bool {
 		return count($this->set) === 0;
 	}
+
 	/**
 	 * @return ObjectSet
 	 */
@@ -64,21 +65,21 @@ class ModifierSet {
 		}
 	}
 
-	public function __clone(): void {
-		$clonedSet = [];
-
-		foreach($this->set as $id => $modifier){
-			$clonedSet[$id] = clone $modifier;
-		}
-
-		$this->set = $clonedSet;
-	}
-
 	protected function getNextIdByNamespace(string $namespace): string {
 		$id = $namespace . ":" . $this->namespaceIds[$namespace] ?? throw new RuntimeException("Namespace \"$namespace\" not registered");
 		$this->namespaceIds[$namespace]++;
 
 		return $id;
+	}
+
+	public function __clone(): void {
+		$clonedSet = [];
+
+		foreach ($this->set as $id => $modifier) {
+			$clonedSet[$id] = clone $modifier;
+		}
+
+		$this->set = $clonedSet;
 	}
 
 	public function putAll(ModifierSet $set): void {
@@ -101,7 +102,7 @@ class ModifierSet {
 
 		$resultIds = [];
 		foreach ($set->getAll() as $id => $modifier) {
-			$this->put($resultIds[] = $this->getNextIdByNamespace($namespace), $modifier);
+			$this->put($resultIds[] = $namespace . ":" . $id, $modifier);
 		}
 
 		return $resultIds;
@@ -121,7 +122,7 @@ class ModifierSet {
 		return $this->set[$id] ?? null;
 	}
 
-	public function has(string $id): bool{
+	public function has(string $id): bool {
 		return isset($this->set[$id]);
 	}
 
