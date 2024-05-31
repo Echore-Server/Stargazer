@@ -23,8 +23,6 @@ abstract class BaseStargazer extends Stargazer {
 
 	protected ModifiableValue $attackDamage;
 
-	protected ModifierApplier $modifierApplier;
-
 	/**
 	 * @param T&Living $entity
 	 */
@@ -32,16 +30,16 @@ abstract class BaseStargazer extends Stargazer {
 		parent::__construct();
 		$this->entity = $entity;
 
-		$this->maxHealth = $this->createHook(new ModifiableValue(20), function(ModifiableValue $value, mixed $entity): void {
-			$entity->setMaxHealth($value->getFinalFloored($this->modifierApplier));
+		$this->maxHealth = $this->createHook(new ModifiableValue(20, ModifierSet::MODE_MULTIPLICATION), function(ModifiableValue $value, mixed $entity): void {
+			$entity->setMaxHealth($value->getFinalFloored());
 
 			if ($entity->getHealth() > $entity->getMaxHealth()) {
 				$entity->setHealth($entity->getMaxHealth());
 			}
 		});
 
-		$this->movementSpeed = $this->createHook(new ModifiableValue(0.10), function(ModifiableValue $value, mixed $entity): void {
-			$final = $value->getFinal($this->modifierApplier);
+		$this->movementSpeed = $this->createHook(new ModifiableValue(0.10, ModifierSet::MODE_MULTIPLICATION), function(ModifiableValue $value, mixed $entity): void {
+			$final = max(0, $value->getFinal());
 
 			if ($entity instanceof Player) {
 				$final *= $entity->isSprinting() ? 1.3 : 1.0;
@@ -52,8 +50,8 @@ abstract class BaseStargazer extends Stargazer {
 		$this->movementSpeed->setValue($entity->getMovementSpeed());
 
 
-		$this->attackDamage = $this->createHook(new ModifiableValue(1.0), function(ModifiableValue $value, mixed $entity): void {
-			$final = $value->getFinal($this->modifierApplier);
+		$this->attackDamage = $this->createHook(new ModifiableValue(1.0, ModifierSet::MODE_MULTIPLICATION), function(ModifiableValue $value, mixed $entity): void {
+			$final = $value->getFinal();
 
 			$entity->getAttributeMap()->get(Attribute::ATTACK_DAMAGE)->setValue($final, true);
 		});
@@ -65,7 +63,7 @@ abstract class BaseStargazer extends Stargazer {
 	 * @return ModifiableValue
 	 */
 	protected function createHook(ModifiableValue $value, Closure $hook): ModifiableValue {
-		$value->getDirtyHooks()->add(function() use ($hook, $value): void {
+		$value->getModifiers()->getChangeHooks()->add(function() use ($hook, $value): void {
 			($hook)($value, $this->entity);
 		});
 

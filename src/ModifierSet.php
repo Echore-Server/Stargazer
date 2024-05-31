@@ -9,21 +9,45 @@ use RuntimeException;
 
 class ModifierSet {
 
+	const MODE_ADDITION = 0;
+	const MODE_MULTIPLICATION = 1;
+
 	/**
 	 * @var array<string, Modifier>
 	 */
-	private array $set;
+	protected array $set;
 
-	private array $namespaceIds;
+	protected array $namespaceIds;
+
+	protected Modifier $result;
 
 	private ObjectSet $changeHooks;
 
-	public function __construct() {
+	/**
+	 * @var array<string, float>
+	 */
+	private array $appliedMultipliers = [];
+
+	/**
+	 * @var self::MODE_*
+	 */
+	private int $mode;
+
+
+	public function __construct(int $mode) {
+		$this->mode = $mode;
 		$this->set = [];
 		$this->namespaceIds = [];
 		$this->changeHooks = new ObjectSet();
+		$this->result = Modifier::multiplier(1.0);
 	}
 
+	/**
+	 * @return Modifier
+	 */
+	public function getResult(): Modifier {
+		return $this->result;
+	}
 
 	public function isEmpty(): bool {
 		return count($this->set) === 0;
@@ -55,11 +79,28 @@ class ModifierSet {
 			throw new RuntimeException("Modifier id \"$id\" already set");
 		}
 
-		$this->set[$id] = $modifier;
+		$this->internalPut($id, $modifier);
 		$this->onChanged();
 	}
 
-	protected function onChanged(): void {
+	/**
+	 * @internal
+	 */
+	public function internalPut(string $id, Modifier $modifier): void {
+		$this->set[$id] = $modifier;
+		$this->appliedMultipliers[$id] = $modifier->multiplier;
+		$this->internalProcessAdd($modifier->multiplier, $this->result);
+	}
+
+	public function internalProcessAdd(float $multiplier, Modifier $origin): void {
+		if ($this->mode === self::MODE_ADDITION) {
+			$origin->multiplier += ($multiplier - 1.0);
+		} elseif ($this->mode === self::MODE_MULTIPLICATION) {
+			$origin->multiplier *= $multiplier;
+		}
+	}
+
+	public function onChanged(): void {
 		foreach ($this->changeHooks as $hook) {
 			($hook)();
 		}
@@ -72,6 +113,43 @@ class ModifierSet {
 		return $id;
 	}
 
+	public function recalculate(string $targetId): void {
+		if (isset($this->set[$targetId]) && isset($this->appliedMultipliers[$targetId])) {
+			$modifier = $this->set[$targetId];
+			$appliedMultiplier = $this->appliedMultipliers[$targetId];
+
+			$this->internalProcessRemove($appliedMultiplier, $this->result);
+			$this->appliedMultipliers[$targetId] = $modifier->multiplier;
+			$this->internalProcessAdd($modifier->multiplier, $this->result);
+
+			$this->onChanged();
+		}
+	}
+
+	public function internalProcessRemove(float $multiplier, Modifier $origin): void {
+		if ($this->mode === self::MODE_ADDITION) {
+			$origin->multiplier -= ($multiplier - 1.0);
+		} elseif ($this->mode === self::MODE_MULTIPLICATION) {
+			if (abs($multiplier) <= 0.0000001) {
+				$this->recalculateAll();
+			} else {
+				$origin->multiplier /= $multiplier;
+			}
+		}
+	}
+
+	public function recalculateAll(): void {
+		$this->appliedMultipliers = [];
+		$this->result->multiplier = 1.0;
+
+		foreach ($this->set as $id => $modifier) {
+			$this->appliedMultipliers[$id] = $modifier->multiplier;
+			$this->internalProcessAdd($modifier->multiplier, $this->result);
+		}
+
+		$this->onChanged();
+	}
+
 	public function __clone(): void {
 		$clonedSet = [];
 
@@ -80,6 +158,8 @@ class ModifierSet {
 		}
 
 		$this->set = $clonedSet;
+		$this->result = Modifier::multiplier($this->result->multiplier);
+		$this->changeHooks = clone $this->changeHooks;
 	}
 
 	public function putAll(ModifierSet $set): void {
@@ -109,13 +189,29 @@ class ModifierSet {
 	}
 
 	public function remove(string $id): void {
-		unset($this->set[$id]);
+		$this->internalRemove($id);
 		$this->onChanged();
 	}
 
+	public function internalRemove(string $id): void {
+		if (isset($this->set[$id])) {
+			$modifier = $this->set[$id];
+			unset($this->set[$id]);
+
+			unset($this->appliedMultipliers[$id]);
+			$this->internalProcessRemove($modifier->multiplier, $this->result);
+		}
+	}
+
 	public function clear(): void {
-		$this->set = [];
+		$this->internalClear();
 		$this->onChanged();
+	}
+
+	public function internalClear(): void {
+		$this->set = [];
+		$this->appliedMultipliers = [];
+		$this->result->multiplier = 1.0;
 	}
 
 	public function get(string $id): ?Modifier {

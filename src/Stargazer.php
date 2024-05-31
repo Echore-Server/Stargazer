@@ -16,17 +16,13 @@ abstract class Stargazer {
 	 */
 	private static WeakMap $map;
 
-	protected ModifierApplier $modifierApplier;
+	protected ModifierGroup $takeDamageModifiers;
 
-	protected ModifierSet $takeDamageModifiers;
-
-	protected ModifierSet $inflictDamageModifiers;
+	protected ModifierGroup $inflictDamageModifiers;
 
 	public function __construct() {
-		$this->modifierApplier = ModifierApplierTypes::default();
-
-		$this->takeDamageModifiers = new ModifierSet();
-		$this->inflictDamageModifiers = new ModifierSet();
+		$this->takeDamageModifiers = new ModifierGroup();
+		$this->inflictDamageModifiers = new ModifierGroup();
 	}
 
 	public static function initFor(Living $entity): void {
@@ -45,8 +41,6 @@ abstract class Stargazer {
 		}
 
 		return new StargazerLiving($entity);
-
-
 	}
 
 	/**
@@ -65,18 +59,16 @@ abstract class Stargazer {
 	abstract public function getAttackDamage(): ModifiableValue;
 
 	/**
-	 * @return ModifierApplier
+	 * @return ModifierGroup
 	 */
-	public function getModifierApplier(): ModifierApplier {
-		return $this->modifierApplier;
-	}
-
-	public function getInflictDamageModifiers(): ModifierSet {
+	public function getInflictDamageModifiers(): ModifierGroup {
 		return $this->inflictDamageModifiers;
 	}
 
-	public function getTakeDamageModifiers(): ModifierSet {
+	/**
+	 * @return ModifierGroup
+	 */
+	public function getTakeDamageModifiers(): ModifierGroup {
 		return $this->takeDamageModifiers;
 	}
-
 }
