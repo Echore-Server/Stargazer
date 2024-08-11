@@ -189,23 +189,28 @@ class ModifierSet {
 	}
 
 	public function remove(string $id): void {
-		$this->internalRemove($id);
-		$this->onChanged();
+		if ($this->internalRemove($id)){
+			$this->onChanged();
+		}
 	}
 
-	public function internalRemove(string $id): void {
+	public function internalRemove(string $id): bool {
 		if (isset($this->set[$id])) {
 			$modifier = $this->set[$id];
 			unset($this->set[$id]);
 
 			unset($this->appliedMultipliers[$id]);
 			$this->internalProcessRemove($modifier->multiplier, $this->result);
+			return true;
 		}
+
+		return false;
 	}
 
 	public function clear(): void {
+		$changed = !empty($this->set);
 		$this->internalClear();
-		$this->onChanged();
+		if ($changed) $this->onChanged();
 	}
 
 	public function internalClear(): void {

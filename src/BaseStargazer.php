@@ -30,15 +30,16 @@ abstract class BaseStargazer extends Stargazer {
 		parent::__construct();
 		$this->entity = $entity;
 
-		$this->maxHealth = $this->createHook(new ModifiableValue(20, ModifierSet::MODE_MULTIPLICATION), function(ModifiableValue $value, mixed $entity): void {
-			$entity->setMaxHealth($value->getFinalFloored());
+		$this->maxHealth = $this->createHook(new ModifiableValue(20, ModifierSet::MODE_ADDITION), function(ModifiableValue $value, mixed $entity): void {
+			$final = max(1, $value->getFinalFloored());
+			$entity->setMaxHealth($final);
 
 			if ($entity->getHealth() > $entity->getMaxHealth()) {
 				$entity->setHealth($entity->getMaxHealth());
 			}
 		});
 
-		$this->movementSpeed = $this->createHook(new ModifiableValue(0.10, ModifierSet::MODE_MULTIPLICATION), function(ModifiableValue $value, mixed $entity): void {
+		$this->movementSpeed = $this->createHook(new ModifiableValue(0.10, ModifierSet::MODE_ADDITION), function(ModifiableValue $value, mixed $entity): void {
 			$final = max(0, $value->getFinal());
 
 			if ($entity instanceof Player) {
@@ -50,7 +51,7 @@ abstract class BaseStargazer extends Stargazer {
 		$this->movementSpeed->setValue($entity->getMovementSpeed());
 
 
-		$this->attackDamage = $this->createHook(new ModifiableValue(1.0, ModifierSet::MODE_MULTIPLICATION), function(ModifiableValue $value, mixed $entity): void {
+		$this->attackDamage = $this->createHook(new ModifiableValue(1.0, ModifierSet::MODE_ADDITION), function(ModifiableValue $value, mixed $entity): void {
 			$final = $value->getFinal();
 
 			$entity->getAttributeMap()->get(Attribute::ATTACK_DAMAGE)->setValue($final, true);
