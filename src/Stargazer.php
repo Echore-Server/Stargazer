@@ -20,9 +20,15 @@ abstract class Stargazer {
 
 	protected ModifierGroup $inflictDamageModifiers;
 
+	protected ModifierGroup $takeHealModifiers;
+
+	protected ModifierGroup $giveHealModifiers;
+
 	public function __construct() {
 		$this->takeDamageModifiers = new ModifierGroup();
 		$this->inflictDamageModifiers = new ModifierGroup();
+		$this->takeHealModifiers = new ModifierGroup();
+		$this->giveHealModifiers = new ModifierGroup();
 	}
 
 	public static function initFor(Living $entity): void {
@@ -41,6 +47,20 @@ abstract class Stargazer {
 		}
 
 		return new StargazerLiving($entity);
+	}
+
+	/**
+	 * @return ModifierGroup
+	 */
+	public function getGiveHealModifiers(): ModifierGroup {
+		return $this->giveHealModifiers;
+	}
+
+	/**
+	 * @return ModifierGroup
+	 */
+	public function getTakeHealModifiers(): ModifierGroup {
+		return $this->takeHealModifiers;
 	}
 
 	/**
