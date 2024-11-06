@@ -52,7 +52,7 @@ abstract class BaseStargazer extends Stargazer {
 
 
 		$this->attackDamage = $this->createHook(new ModifiableValue(1.0, ModifierSet::MODE_ADDITION), function(ModifiableValue $value, mixed $entity): void {
-			$final = $value->getFinal();
+			$final = max(0, $value->getFinal());
 
 			$entity->getAttributeMap()->get(Attribute::ATTACK_DAMAGE)->setValue($final, true);
 		});
