@@ -43,6 +43,35 @@ class ModifierSet {
 	}
 
 	/**
+	 * @return int
+	 */
+	public function getMode(): int {
+		return $this->mode;
+	}
+
+	/**
+	 * @param int $mode
+	 */
+	public function changeMode(int $mode): void {
+		$this->mode = $mode;
+		$this->recalculateAll();
+	}
+
+	/**
+	 * @param array $namespaceIds
+	 */
+	public function setNamespaceIds(array $namespaceIds): void {
+		$this->namespaceIds = $namespaceIds;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getNamespaceIds(): array {
+		return $this->namespaceIds;
+	}
+
+	/**
 	 * @return Modifier
 	 */
 	public function getResult(): Modifier {
