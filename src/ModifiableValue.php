@@ -26,6 +26,14 @@ class ModifiableValue {
 	}
 
 	/**
+	 * @param float|int $original
+	 */
+	public function setOriginal(float|int $original): void {
+		$this->value = $original;
+		$this->original = $original;
+	}
+
+	/**
 	 * @return ModifierSet
 	 */
 	public function getModifiers(): ModifierSet {
