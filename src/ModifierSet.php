@@ -153,14 +153,26 @@ class ModifierSet {
 		return $id;
 	}
 
-	public function recalculate(string $targetId): void {
+	public function putAll(ModifierSet $set): void {
+		foreach ($set->getAll() as $id => $modifier) {
+			$this->put($id, $modifier);
+		}
+	}
+
+	/**
+	 * @return array<string, float>
+	 */
+	public function getAll(): array {
+		return $this->set;
+	}
+
+	public function update(string $targetId, float $newModifier): void {
 		if (isset($this->set[$targetId]) && isset($this->appliedMultipliers[$targetId])) {
-			$modifier = $this->set[$targetId];
 			$appliedMultiplier = $this->appliedMultipliers[$targetId];
 
 			$this->result = $this->internalProcessRemove($appliedMultiplier, $this->result);
-			$this->appliedMultipliers[$targetId] = $modifier;
-			$this->result = $this->internalProcessAdd($modifier, $this->result);
+			$this->appliedMultipliers[$targetId] = $newModifier;
+			$this->result = $this->internalProcessAdd($newModifier, $this->result);
 
 			$this->onChanged();
 		}
@@ -178,19 +190,6 @@ class ModifierSet {
 		}
 
 		return $origin;
-	}
-
-	public function putAll(ModifierSet $set): void {
-		foreach ($set->getAll() as $id => $modifier) {
-			$this->put($id, $modifier);
-		}
-	}
-
-	/**
-	 * @return array<string, float>
-	 */
-	public function getAll(): array {
-		return $this->set;
 	}
 
 	public function addAll(string $namespace, ModifierSet $set): array {
