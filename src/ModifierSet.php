@@ -13,13 +13,13 @@ class ModifierSet {
 	const MODE_MULTIPLICATION = 1;
 
 	/**
-	 * @var array<string, Modifier>
+	 * @var array<string, float>
 	 */
 	protected array $set;
 
 	protected array $namespaceIds;
 
-	protected Modifier $result;
+	protected float $result;
 
 	private ObjectSet $changeHooks;
 
@@ -39,7 +39,7 @@ class ModifierSet {
 		$this->set = [];
 		$this->namespaceIds = [];
 		$this->changeHooks = new ObjectSet();
-		$this->result = Modifier::multiplier(1.0);
+		$this->result = 1.0;
 	}
 
 	/**
@@ -57,11 +57,32 @@ class ModifierSet {
 		$this->recalculateAll();
 	}
 
-	/**
-	 * @param array $namespaceIds
-	 */
-	public function setNamespaceIds(array $namespaceIds): void {
-		$this->namespaceIds = $namespaceIds;
+	public function recalculateAll(): void {
+		$this->appliedMultipliers = [];
+		$this->result = 1.0;
+
+		foreach ($this->set as $id => $modifier) {
+			$this->appliedMultipliers[$id] = $modifier;
+			$this->result = $this->internalProcessAdd($modifier, $this->result);
+		}
+
+		$this->onChanged();
+	}
+
+	public function internalProcessAdd(float $multiplier, float $origin): float {
+		if ($this->mode === self::MODE_ADDITION) {
+			$origin += ($multiplier - 1.0);
+		} elseif ($this->mode === self::MODE_MULTIPLICATION) {
+			$origin *= $multiplier;
+		}
+
+		return $origin;
+	}
+
+	public function onChanged(): void {
+		foreach ($this->changeHooks as $hook) {
+			($hook)();
+		}
 	}
 
 	/**
@@ -72,9 +93,13 @@ class ModifierSet {
 	}
 
 	/**
-	 * @return Modifier
+	 * @param array $namespaceIds
 	 */
-	public function getResult(): Modifier {
+	public function setNamespaceIds(array $namespaceIds): void {
+		$this->namespaceIds = $namespaceIds;
+	}
+
+	public function getResult(): float {
 		return $this->result;
 	}
 
@@ -89,7 +114,7 @@ class ModifierSet {
 		return $this->changeHooks;
 	}
 
-	public function add(string $namespace, Modifier $modifier): string {
+	public function add(string $namespace, float $modifier): string {
 		if (!isset($this->namespaceIds[$namespace])) {
 			$this->registerNamespace($namespace);
 		}
@@ -103,7 +128,7 @@ class ModifierSet {
 		$this->namespaceIds[$namespace] = 0;
 	}
 
-	public function put(string $id, Modifier $modifier): void {
+	public function put(string $id, float $modifier): void {
 		if (isset($this->set[$id])) {
 			throw new RuntimeException("Modifier id \"$id\" already set");
 		}
@@ -115,24 +140,10 @@ class ModifierSet {
 	/**
 	 * @internal
 	 */
-	public function internalPut(string $id, Modifier $modifier): void {
+	public function internalPut(string $id, float $modifier): void {
 		$this->set[$id] = $modifier;
-		$this->appliedMultipliers[$id] = $modifier->multiplier;
-		$this->internalProcessAdd($modifier->multiplier, $this->result);
-	}
-
-	public function internalProcessAdd(float $multiplier, Modifier $origin): void {
-		if ($this->mode === self::MODE_ADDITION) {
-			$origin->multiplier += ($multiplier - 1.0);
-		} elseif ($this->mode === self::MODE_MULTIPLICATION) {
-			$origin->multiplier *= $multiplier;
-		}
-	}
-
-	public function onChanged(): void {
-		foreach ($this->changeHooks as $hook) {
-			($hook)();
-		}
+		$this->appliedMultipliers[$id] = $modifier;
+		$this->result = $this->internalProcessAdd($modifier, $this->result);
 	}
 
 	protected function getNextIdByNamespace(string $namespace): string {
@@ -142,55 +153,6 @@ class ModifierSet {
 		return $id;
 	}
 
-	public function recalculate(string $targetId): void {
-		if (isset($this->set[$targetId]) && isset($this->appliedMultipliers[$targetId])) {
-			$modifier = $this->set[$targetId];
-			$appliedMultiplier = $this->appliedMultipliers[$targetId];
-
-			$this->internalProcessRemove($appliedMultiplier, $this->result);
-			$this->appliedMultipliers[$targetId] = $modifier->multiplier;
-			$this->internalProcessAdd($modifier->multiplier, $this->result);
-
-			$this->onChanged();
-		}
-	}
-
-	public function internalProcessRemove(float $multiplier, Modifier $origin): void {
-		if ($this->mode === self::MODE_ADDITION) {
-			$origin->multiplier -= ($multiplier - 1.0);
-		} elseif ($this->mode === self::MODE_MULTIPLICATION) {
-			if (abs($multiplier) <= 0.0000001) {
-				$this->recalculateAll();
-			} else {
-				$origin->multiplier /= $multiplier;
-			}
-		}
-	}
-
-	public function recalculateAll(): void {
-		$this->appliedMultipliers = [];
-		$this->result->multiplier = 1.0;
-
-		foreach ($this->set as $id => $modifier) {
-			$this->appliedMultipliers[$id] = $modifier->multiplier;
-			$this->internalProcessAdd($modifier->multiplier, $this->result);
-		}
-
-		$this->onChanged();
-	}
-
-	public function __clone(): void {
-		$clonedSet = [];
-
-		foreach ($this->set as $id => $modifier) {
-			$clonedSet[$id] = clone $modifier;
-		}
-
-		$this->set = $clonedSet;
-		$this->result = Modifier::multiplier($this->result->multiplier);
-		$this->changeHooks = clone $this->changeHooks;
-	}
-
 	public function putAll(ModifierSet $set): void {
 		foreach ($set->getAll() as $id => $modifier) {
 			$this->put($id, $modifier);
@@ -198,10 +160,36 @@ class ModifierSet {
 	}
 
 	/**
-	 * @return array<string, Modifier>
+	 * @return array<string, float>
 	 */
 	public function getAll(): array {
 		return $this->set;
+	}
+
+	public function update(string $targetId, float $newModifier): void {
+		if (isset($this->set[$targetId]) && isset($this->appliedMultipliers[$targetId])) {
+			$appliedMultiplier = $this->appliedMultipliers[$targetId];
+
+			$this->result = $this->internalProcessRemove($appliedMultiplier, $this->result);
+			$this->appliedMultipliers[$targetId] = $newModifier;
+			$this->result = $this->internalProcessAdd($newModifier, $this->result);
+
+			$this->onChanged();
+		}
+	}
+
+	public function internalProcessRemove(float $multiplier, float $origin): float {
+		if ($this->mode === self::MODE_ADDITION) {
+			$origin -= ($multiplier - 1.0);
+		} elseif ($this->mode === self::MODE_MULTIPLICATION) {
+			if (abs($multiplier) <= 0.0000001) {
+				$this->recalculateAll();
+			} else {
+				$origin /= $multiplier;
+			}
+		}
+
+		return $origin;
 	}
 
 	public function addAll(string $namespace, ModifierSet $set): array {
@@ -218,7 +206,7 @@ class ModifierSet {
 	}
 
 	public function remove(string $id): void {
-		if ($this->internalRemove($id)){
+		if ($this->internalRemove($id)) {
 			$this->onChanged();
 		}
 	}
@@ -229,7 +217,8 @@ class ModifierSet {
 			unset($this->set[$id]);
 
 			unset($this->appliedMultipliers[$id]);
-			$this->internalProcessRemove($modifier->multiplier, $this->result);
+			$this->result = $this->internalProcessRemove($modifier, $this->result);
+
 			return true;
 		}
 
@@ -239,16 +228,17 @@ class ModifierSet {
 	public function clear(): void {
 		$changed = !empty($this->set);
 		$this->internalClear();
-		if ($changed) $this->onChanged();
+		if ($changed)
+			$this->onChanged();
 	}
 
 	public function internalClear(): void {
 		$this->set = [];
 		$this->appliedMultipliers = [];
-		$this->result->multiplier = 1.0;
+		$this->result = 1.0;
 	}
 
-	public function get(string $id): ?Modifier {
+	public function get(string $id): ?float {
 		return $this->set[$id] ?? null;
 	}
 
@@ -257,7 +247,7 @@ class ModifierSet {
 	}
 
 	/**
-	 * @return array<string, Modifier>
+	 * @return array<string, float>
 	 */
 	public function toArray(): array {
 		return $this->getAll();
