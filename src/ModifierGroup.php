@@ -63,7 +63,7 @@ class ModifierGroup {
 	}
 
 	/**
-	 * @return Modifier[]
+	 * @return float[]
 	 */
 	public function getSortedModifiers(): array {
 		if ($this->dirty) {

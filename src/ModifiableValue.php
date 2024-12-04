@@ -22,15 +22,7 @@ class ModifiableValue {
 	}
 
 	public function getFinal(): float {
-		return $this->modifiers->getResult()->multiplier * $this->value;
-	}
-
-	/**
-	 * @param float|int $original
-	 */
-	public function setOriginal(float|int $original): void {
-		$this->value = $original;
-		$this->original = $original;
+		return $this->modifiers->getResult() * $this->value;
 	}
 
 	/**
@@ -45,6 +37,14 @@ class ModifiableValue {
 	 */
 	public function getOriginal(): float|int {
 		return $this->original;
+	}
+
+	/**
+	 * @param float|int $original
+	 */
+	public function setOriginal(float|int $original): void {
+		$this->value = $original;
+		$this->original = $original;
 	}
 
 	/**
