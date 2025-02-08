@@ -172,6 +172,7 @@ class ModifierSet {
 
 			$this->result = $this->internalProcessRemove($appliedMultiplier, $this->result);
 			$this->appliedMultipliers[$targetId] = $newModifier;
+			$this->set[$targetId] = $newModifier;
 			$this->result = $this->internalProcessAdd($newModifier, $this->result);
 
 			$this->onChanged();
