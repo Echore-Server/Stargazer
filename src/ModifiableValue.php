@@ -8,13 +8,40 @@ class ModifiableValue {
 
 	protected int|float $value;
 
+	protected ModifierSet $preModifiers;
+
 	protected ModifierSet $modifiers;
+
+	/**
+	 * @var ModifierSet[]
+	 */
+	protected array $attachedModifiers;
+
+	protected int $mode;
 
 
 	public function __construct(int|float $original, int $mode) {
 		$this->value = $original;
 		$this->original = $original;
+		$this->mode = $mode;
+		$this->preModifiers = new ModifierSet($mode);
 		$this->modifiers = new ModifierSet($mode);
+		$this->attachedModifiers = [];
+	}
+
+	/**
+	 * @return ModifierSet
+	 */
+	public function getPreModifiers(): ModifierSet {
+		return $this->preModifiers;
+	}
+
+	public function attachModifiers(ModifierSet $modifier): void{
+		$this->attachedModifiers[spl_object_hash($modifier)] = $modifier;
+	}
+
+	public function detachModifiers(ModifierSet $modifier): void{
+		unset($this->attachedModifiers[spl_object_hash($modifier)]);
 	}
 
 	public function getFinalFloored(): int {
@@ -22,7 +49,16 @@ class ModifiableValue {
 	}
 
 	public function getFinal(): float {
-		return $this->modifiers->getResult() * $this->value;
+		if (empty($this->attachedModifiers)) {
+			return $this->modifiers->getResult() * $this->preModifiers->getResult() * $this->value;
+		}
+
+		$f = new ModifierSet($this->mode);
+		foreach($this->attachedModifiers as $modifier){
+			$f->add("temp", $modifier->getResult());
+		}
+		$f->add("temp", $this->modifiers->getResult());
+		return $f->getResult() * $this->preModifiers->getResult() * $this->value;
 	}
 
 	/**
@@ -60,11 +96,17 @@ class ModifiableValue {
 	public function setValue(float|int $value): void {
 		$this->value = $value;
 
+		$this->preModifiers->onChanged();
 		$this->modifiers->onChanged();
+	}
+
+	public function addValue(float|int $value): void{
+		$this->setValue($this->value + $value);
 	}
 
 	public function __clone(): void {
 		$this->modifiers = clone $this->modifiers;
+		$this->preModifiers = clone $this->preModifiers;
 	}
 
 }
