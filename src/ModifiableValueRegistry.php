@@ -13,8 +13,10 @@ class ModifiableValueRegistry {
 		$this->values = [];
 	}
 
-	public function clear(): void{
-		$this->values = [];
+	public function dispose(): void{
+		foreach($this->values as $value){
+			$value->dispose();
+		}
 	}
 
 	public function exists(string $name): bool{

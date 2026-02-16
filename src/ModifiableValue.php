@@ -60,6 +60,11 @@ class ModifiableValue {
 		$f->add("temp", $this->modifiers->getResult());
 		return $f->getResult() * $this->preModifiers->getResult() * $this->value;
 	}
+	public function dispose(): void{
+		$this->modifiers->getChangeHooks()->clear();
+		$this->preModifiers->getChangeHooks()->clear();
+		$this->attachedModifiers = [];
+	}
 
 	/**
 	 * @return ModifierSet
